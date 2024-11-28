@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Карусель с перетаскиванием</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #f0f0f0;
+    }
+    .carousel {
+      width: 300px;
+      overflow: hidden;
+      position: relative;
+    }
+    .slides {
+      display: flex;
+      transition: transform 0.5s ease-in-out;
+      cursor: grab;
+    }
+    .slides.dragging {
+      transition: none;
+      cursor: grabbing;
+    }
+    .slide {
+      min-width: 100%;
+      box-sizing: border-box;
+    }
+    .slide img {
+      width: 100%;
+      display: block;
+    }
+    .pagination {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .pagination button {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: none;
+      background-color: #ccc;
+      cursor: pointer;
+    }
+    .pagination button.active {
+      background-color: #555;
+    }
+  </style>
+</head>
+<body>
+  <div class="carousel">
+    <div class="slides" id="slides">
+      <div class="slide"><img src="https://via.placeholder.com/300x150?text=Slide+1" alt="Slide 1"></div>
+      <div class="slide"><img src="https://via.placeholder.com/300x150?text=Slide+2" alt="Slide 2"></div>
+      <div class="slide"><img src="https://via.placeholder.com/300x150?text=Slide+3" alt="Slide 3"></div>
+    </div>
+    <div class="pagination" id="pagination"></div>
+  </div>
+
+  <script>
+    const slides = document.querySelectorAll('.slide');
+    const pagination = document.getElementById('pagination');
+    const slidesContainer = document.getElementById('slides');
+
+    let currentIndex = 0;
+    let startX = 0;
+    let currentTranslate = 0;
+    let prevTranslate = 0;
+    let isDragging = false;
+
+    // Создаем кнопки пагинации
+    slides.forEach((_, index) => {
+      const button = document.createElement('button');
+      button.addEventListener('click', () => {
+        currentIndex = index;
+        updateCarousel();
+      });
+      pagination.appendChild(button);
+    });
+
+    const updateCarousel = () => {
+      currentTranslate = -currentIndex * slidesContainer.clientWidth;
+      setSlidePosition();
+      document.querySelectorAll('.pagination button').forEach((button, index) => {
+        button.classList.toggle('active', index === currentIndex);
+      });
+    };
+
+    const setSlidePosition = () => {
+      slidesContainer.style.transform = `translateX(${currentTranslate}px)`;
+    };
+
+    // События для перетаскивания мышью или касанием
+    slidesContainer.addEventListener('mousedown', startDrag);
+    slidesContainer.addEventListener('touchstart', startDrag);
+
+    slidesContainer.addEventListener('mousemove', drag);
+    slidesContainer.addEventListener('touchmove', drag);
+
+    slidesContainer.addEventListener('mouseup', endDrag);
+    slidesContainer.addEventListener('mouseleave', endDrag);
+    slidesContainer.addEventListener('touchend', endDrag);
+
+    function startDrag(event) {
+      isDragging = true;
+      slidesContainer.classList.add('dragging');
+      startX = getPositionX(event);
+      prevTranslate = currentTranslate;
+    }
+
+    function drag(event) {
+      if (!isDragging) return;
+      const currentPosition = getPositionX(event);
+      currentTranslate = prevTranslate + currentPosition - startX;
+      setSlidePosition();
+    }
+
+    function endDrag() {
+      isDragging = false;
+      slidesContainer.classList.remove('dragging');
+      const movedBy = currentTranslate - prevTranslate;
+
+      // Если перемещение значительное, сменить слайд
+      if (movedBy < -50 && currentIndex < slides.length - 1) currentIndex++;
+      if (movedBy > 50 && currentIndex > 0) currentIndex--;
+
+      updateCarousel();
+    }
+
+    function getPositionX(event) {
+      return event.type.includes('mouse') ? event.clientX : event.touches[0].clientX;
+    }
+
+    // Инициализация
+    updateCarousel();
+  </script>
+</body>
+</html>
